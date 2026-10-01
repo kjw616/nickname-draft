@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nickname Draft — NBA Nickname Guessing Game</title>
+<style>
+  :root {
+    --bg: #0f1420;
+    --bg-panel: #171e2e;
+    --bg-panel-2: #1e2740;
+    --border: #2a3450;
+    --text: #e7ebf5;
+    --text-dim: #94a0bd;
+    --accent: #f97316;
+    --accent-dim: #c2570a;
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  header h1 .ball { font-size: 22px; }
+  header .sub { color: var(--text-dim); font-size: 12.5px; margin-top: 4px; }
+  nav.tabs {
+    display: flex;
+    gap: 6px;
+    padding: 14px 24px 0;
+    flex-wrap: wrap;
+  }
+  nav.tabs button {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    color: var(--text-dim);
+    padding: 10px 18px;
+    border-radius: 10px 10px 0 0;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  nav.tabs button.active {
+    background: var(--bg-panel-2);
+  }
+  nav.tabs button[data-mode="easy"].active { color: var(--green); }
+  nav.tabs button[data-mode="normal"].active { color: var(--blue); }
+  nav.tabs button[data-mode="hard"].active { color: var(--accent); }
+  nav.tabs button[data-mode="impossible"].active { color: var(--red); }
+  main {
+    padding: 0 24px 40px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    border-radius: 0 12px 12px 12px;
+    padding: 24px;
+  }
+  .card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .intro p { color: var(--text-dim); font-size: 14px; line-height: 1.55; }
+  .intro ul { color: var(--text-dim); font-size: 13.5px; line-height: 1.7; padding-left: 20px; }
+  .intro li b { color: var(--text); }
+  .btn {
+    background: var(--accent);
+    border: none;
+    color: #1a1206;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14.5px;
+  }
+  .btn:hover { background: #ffa552; }
+  .btn.secondary {
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .btn.secondary:hover { border-color: var(--accent); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .hud .stat { color: var(--text); font-weight: 700; }
+  .hud .lives { letter-spacing: 2px; }
+
+  .progress-bar {
+    height: 6px;
+    border-radius: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .progress-bar > div {
+    height: 100%;
+    background: var(--accent);
+    transition: width .25s ease;
+  }
+
+  .nickname-box {
+    text-align: center;
+    padding: 30px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 18px;
+  }
+  .nickname-box .label {
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  .nickname-box .nick {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1.3;
+  }
+  .nickname-box .extra-nick {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 520px) {
+    .choices { grid-template-columns: 1fr; }
+  }
+  .choice-btn {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 14px 16px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14.5px;
+    font-weight: 600;
+    text-align: left;
+  }
+  .choice-btn:hover:not(:disabled) { border-color: var(--accent); }
+  .choice-btn.correct { border-color: var(--green); background: rgba(34,197,94,0.12); color: var(--green); }
+  .choice-btn.wrong { border-color: var(--red); background: rgba(239,68,68,0.12); color: var(--red); }
+  .choice-btn:disabled { cursor: default; opacity: .7; }
+
+  .guess-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .guess-row input[type=text] {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 9px;
+    font-size: 15px;
+  }
+  .guess-row input[type=text]:focus { outline: none; border-color: var(--accent); }
+
+  .feedback {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 9px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { border-color: var(--green); background: rgba(34,197,94,0.10); }
+  .feedback.wrong { border-color: var(--red); background: rgba(239,68,68,0.10); }
+  .feedback .fname { font-weight: 800; font-size: 16px; }
+  .feedback .fnicks { color: var(--text-dim); margin-top: 4px; font-size: 13px; }
+
+  .hint-line {
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--purple);
+    min-height: 16px;
+  }
+
+  .summary h2 { margin-top: 0; }
+  .summary .big-score {
+    font-size: 44px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .summary .sub-score { color: var(--text-dim); font-size: 13.5px; margin-bottom: 18px; }
+  .missed-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .missed-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .missed-item .mnick { color: var(--text-dim); }
+  .missed-item .mname { font-weight: 700; }
+
+  footer {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 11.5px;
+    padding: 20px 24px 30px;
+  }
+  footer a { color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1><span class="ball">🏀</span> Nickname Draft</h1>
+    <div class="sub">Guess the NBA player behind the nickname</div>
+  </div>
+  <div class="sub" id="best-streak-line"></div>
+</header>
+
+<nav class="tabs" id="mode-tabs">
+  <button data-mode="easy" class="active">Easy</button>
+  <button data-mode="normal">Normal</button>
+  <button data-mode="hard">Hard</button>
+  <button data-mode="impossible">Impossible</button>
+</nav>
+
+<main>
+  <div class="panel">
+
+    <div id="screen-intro" class="intro">
+      <p id="intro-desc"></p>
+      <ul id="intro-rules"></ul>
+      <div class="btn-row">
+        <button class="btn" id="start-btn">Start Round</button>
+      </div>
+    </div>
+
+    <div id="screen-game" style="display:none;">
+      <div class="hud">
+        <div>Question <span class="stat" id="hud-qnum">1</span>/<span id="hud-qtotal">10</span></div>
+        <div>Score <span class="stat" id="hud-score">0</span></div>
+        <div>Streak <span class="stat" id="hud-streak">0</span></div>
+        <div class="lives" id="hud-lives"></div>
+      </div>
+      <div class="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+
+      <div class="nickname-box">
+        <div class="label">Known as</div>
+        <div class="nick" id="nick-text">"Nickname"</div>
+        <div class="extra-nick" id="nick-extra"></div>
+      </div>
+
+      <div id="choices-area" class="choices" style="display:none;"></div>
+
+      <div id="input-area" style="display:none;">
+        <div class="guess-row">
+          <input type="text" id="guess-input" placeholder="Type the player's name…" autocomplete="off" spellcheck="false">
+          <button class="btn" id="submit-guess">Guess</button>
+        </div>
+        <div class="hint-line" id="hint-line"></div>
+        <div class="btn-row">
+          <button class="btn secondary" id="hint-btn">Use Hint</button>
+          <button class="btn secondary" id="skip-btn">Skip</button>
+        </div>
+      </div>
+
+      <div class="feedback" id="feedback">
+        <div class="fname" id="feedback-name"></div>
+        <div class="fnicks" id="feedback-nicks"></div>
+      </div>
+
+      <div class="btn-row" id="next-row" style="display:none;">
+        <button class="btn" id="next-btn">Next Question →</button>
+      </div>
+    </div>
+
+    <div id="screen-summary" style="display:none;" class="summary">
+      <h2>Round Complete</h2>
+      <div class="big-score" id="summary-score">0</div>
+      <div class="sub-score" id="summary-sub">0/10 correct</div>
+      <div class="btn-row">
+        <button class="btn" id="play-again-btn">Play Again</button>
+        <button class="btn secondary" id="change-mode-btn">Change Mode</button>
+      </div>
+      <div id="missed-wrap" style="display:none;">
+        <div style="margin-top:20px; font-size:13px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em;">Missed / Skipped</div>
+        <div class="missed-list" id="missed-list"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  Nicknames sourced from player pages on <a href="https://www.basketball-reference.com" target="_blank" rel="noopener">Basketball-Reference.com</a>. Built for fun, not affiliated with SRD.
+</footer>
+
+<script>
+/* ---------------- DATA ---------------- */
+const PLAYERS = [{"id":"jamesle01","tier":"easy","name":"LeBron James","nicknames":["King James","LBJ","Chosen One","Bron-Bron","The Little Emperor","The Akron Hammer","L-Train","Benjamin Buckets","Captain LeMerica","LeGOAT"]},{"id":"jordami01","tier":"easy","name":"Michael Jordan","nicknames":["Mike","Air Jordan","M.J.","His Airness","Money","Black Cat","Mr. June","G.O.A.T.","Superman","Captain Marvel","Black Jesus","Magic Mike"]},{"id":"bryanko01","tier":"easy","name":"Kobe Bryant","nicknames":["Black Mamba","KB24","Vino","Showboat","Little Flying Warrior","The Eighth Man","Lord of the Rings"]},{"id":"onealsh01","tier":"easy","name":"Shaquille O'Neal","nicknames":["Shaq","Diesel","The Big Aristotle","Superman","Shaq Fu","Shaq Daddy","Warrior","The Big Cactus","The Big Shamrock"]},{"id":"johnsma02","tier":"easy","name":"Magic Johnson","nicknames":["Magic","Buck","E.J. the Deejay","Tragic","The Magic Man","Junior"]},{"id":"birdla01","tier":"easy","name":"Larry Bird","nicknames":["Larry Legend","The Hick from French Lick","Kodak","The Great White Hope"]},{"id":"chambwi01","tier":"easy","name":"Wilt Chamberlain","nicknames":["Wilt the Stilt","The Big Dipper","Dippy","Dip","The Load","Big Musty","The Record Book","Hook and Ladder","Wiltie","Whip","Whipper","Norm","Uncle Wiltie","Goliath","Stuffer"]},{"id":"iversal01","tier":"easy","name":"Allen Iverson","nicknames":["The Answer","A.I.","Bubba Chuck","Jewelz","The Third Degree"]},{"id":"duranke01","tier":"easy","name":"Kevin Durant","nicknames":["Durantula","KD","Slim Reaper","Easy Money Sniper","The Servant","Green Room"]},{"id":"curryst01","tier":"easy","name":"Stephen Curry","nicknames":["Steph","Baby-Faced Assassin","Chef Curry","The Human Torch","Threezus"]},{"id":"antetgi01","tier":"easy","name":"Giannis Antetokounmpo","nicknames":["The Greek Freak","The Alphabet"]},{"id":"wadedw01","tier":"easy","name":"Dwyane Wade","nicknames":["D-Wade","Flash","WOW","Pookie","Father Prime"]},{"id":"cartevi01","tier":"easy","name":"Vince Carter","nicknames":["V.C.","Vinsanity","Air Canada","Yoda","Half-Man/Half-Amazing","Flying Man","Sunshine"]},{"id":"barklch01","tier":"easy","name":"Charles Barkley","nicknames":["Sir Charles","The Round Mound of Rebound","The Chuckster","The Chuck Wagon","The Prince of Pizza","The Incredible Bulk","The Leaning Tower of Pizza","Bread Truck","Boy Gorge","Love Boat","Food World","The Crisco Kid","Wide Load from Leeds","Ton of Fun","Goodtime Blimp"]},{"id":"olajuha01","tier":"easy","name":"Hakeem Olajuwon","nicknames":["The Dream","Little Moses"]},{"id":"malonka01","tier":"easy","name":"Karl Malone","nicknames":["The Mailman","King Karl"]},{"id":"ervinju01","tier":"easy","name":"Julius Erving","nicknames":["Dr. J","The Doctor","J.W.","The Claw","Black Moses","Houdini","Little Hawk","Doc","Julie","Super Julius"]},{"id":"hardeja01","tier":"easy","name":"James Harden","nicknames":["The Beard","El Chapo","Jimbo Slice","Honey Bun","Uno","The System","Saint James"]},{"id":"abdulka01","tier":"easy","name":"Kareem Abdul-Jabbar","nicknames":["Lew","Cap","Murdock","Big Fella","The Tower of Power"]},{"id":"duncati01","tier":"easy","name":"Tim Duncan","nicknames":["Timmy","The Big Fundamental","Groundhog Day","Old Man Riverwalk","The Stone Buddha"]},{"id":"leonaka01","tier":"easy","name":"Kawhi Leonard","nicknames":["The Claw","Board Man","Fun Guy","The Hand","The Terminator"]},{"id":"georgpa01","tier":"easy","name":"Paul George","nicknames":["PG-13","Young Trece","Batman","Playoff P"]},{"id":"doncilu01","tier":"easy","name":"Luka Dončić","nicknames":["The Matador","El Matador","Cool Hand","The Don","Wonder Boy","El Niño Maravilla","Swaggy L","Luka Legend","Too Easy","Luka Magic"]},{"id":"jokicni01","tier":"easy","name":"Nikola Jokić","nicknames":["Joker","Big Honey","Cookie Monster","Yoke","Big Tipper"]},{"id":"howardw01","tier":"easy","name":"Dwight Howard","nicknames":["Superman","D12","The Daily Double"]},{"id":"paulch01","tier":"normal","name":"Chris Paul","nicknames":["CP3","The Point God","The Skate Instructor"]},{"id":"westbru01","tier":"normal","name":"Russell Westbrook","nicknames":["The Brodie","Russ","Beastbrook","Mr. Triple Double"]},{"id":"thompkl01","tier":"normal","name":"Klay Thompson","nicknames":["Big Smokey","Killa Klay","Game 6 Klay","The Electrician","Sea Captain"]},{"id":"greendr01","tier":"normal","name":"Draymond Green","nicknames":["Day-Day","The Dancing Bear","Dray"]},{"id":"lillada01","tier":"normal","name":"Damian Lillard","nicknames":["Dame","Dame Time","Big Game Dame","Sub Zero","Logo Lillard","Dame D.O.L.L.A."]},{"id":"davisan02","tier":"normal","name":"Anthony Davis","nicknames":["Unibrow","The Brow","AD","Ant","Phatman","Street Clothes","Wilt Davis"]},{"id":"embiijo01","tier":"normal","name":"Joel Embiid","nicknames":["JoJo","The Process","Do-a-180","Troel","The Phantom of the Process","Big Fella"]},{"id":"butleji01","tier":"normal","name":"Jimmy Butler","nicknames":["Jimmy G. Buckets","Himmy Butler","Playoff Jimmy"]},{"id":"piercpa01","tier":"normal","name":"Paul Pierce","nicknames":["The Truth","P-Double"]},{"id":"ginobma01","tier":"normal","name":"Manu Ginóbili","nicknames":["Gino","Narigon","El Contusione","Manudona","Argentina's Flying Man","Obi-Wan Ginobili"]},{"id":"parketo01","tier":"normal","name":"Tony Parker","nicknames":["T.P.","Fiery Francophile","Parisian Torpedo"]},{"id":"wallara01","tier":"normal","name":"Rasheed Wallace","nicknames":["Sheed","Roscoe","Dirty 30"]},{"id":"arenagi01","tier":"normal","name":"Gilbert Arenas","nicknames":["Agent Zero","The Hibachi","Gil","Nacho","Black President","General"]},{"id":"davisba01","tier":"normal","name":"Baron Davis","nicknames":["B-Diddy","Boom Dizzle","The Beard","Bart Oatmeal"]},{"id":"smithjr01","tier":"normal","name":"J.R. Smith","nicknames":["The Prodigy","J.R. Swish","Henny God","911"]},{"id":"gervige01","tier":"normal","name":"George Gervin","nicknames":["Iceman","Ice","Iceberg Slim","GG","The Point Machine"]},{"id":"wilkido01","tier":"normal","name":"Dominique Wilkins","nicknames":["Nique","The Human Highlight Film","Nique-a-Zoid","Zoid"]},{"id":"fraziwa01","tier":"normal","name":"Walt Frazier","nicknames":["Clyde","Mr. Cool"]},{"id":"monroea01","tier":"normal","name":"Earl Monroe","nicknames":["The Pearl","Black Jesus","Black Magic","Einstein","The Lord’s Prayer","Thomas Edison","The Magic Man"]},{"id":"parisro01","tier":"normal","name":"Robert Parish","nicknames":["The Chief","Slim"]},{"id":"youngni01","tier":"hard","name":"Nick Young","nicknames":["Swaggy P","Bean Burrito","The City","Uncle P"]},{"id":"horryro01","tier":"hard","name":"Robert Horry","nicknames":["Big Shot Rob","Big Shot Bob","The Key Man"]},{"id":"boguemu01","tier":"hard","name":"Muggsy Bogues","nicknames":["Muggsy","Muggs","Apple","Billy","The Human Press","The Human Assist","The PT Boat"]},{"id":"dawkida01","tier":"hard","name":"Darryl Dawkins","nicknames":["Chocolate Thunder","Double D","Dawk","Dr. Dunk","Sir Slam","Zandokan the Mad Dunker","Dunk You Very Much","Candy Slam","Sweet D","Big Dawk","Master of Disaster","Squawkin' Dawkin","Double D Dunk","Sir Dunk","Dunk It","Pure Pleasure","Cool Breeze","Dr. Jam","Demon of Destin"]},{"id":"hawkico01","tier":"hard","name":"Connie Hawkins","nicknames":["Hawk","The Man"]},{"id":"terryja01","tier":"hard","name":"Jason Terry","nicknames":["J.T.","The Jet"]},{"id":"thompda01","tier":"impossible","name":"David Thompson","nicknames":["Skywalker","D.T."]},{"id":"ellispe01","tier":"impossible","name":"Pervis Ellison","nicknames":["Never Nervous Pervis","Out of Service Pervis"]},{"id":"havlijo01","tier":"impossible","name":"John Havlicek","nicknames":["Hondo","Country Boy","Captain John"]},{"id":"cunnibi01","tier":"impossible","name":"Billy Cunningham","nicknames":["The Kangaroo Kid","Kang","Billy C"]},{"id":"kerseje01","tier":"impossible","name":"Jerome Kersey","nicknames":["Romeo","Mercy Mercy","Jerome Crazy","The Cobra"]},{"id":"brownfr01","tier":"impossible","name":"Fred Brown","nicknames":["Downtown","Freddie"]},{"id":"turpime01","tier":"impossible","name":"Melvin Turpin","nicknames":["Mel","Dinner Bell","Big Dipper","El Mel","El Mucho Grande","Mealman","Turp","The Great Pumpkin"]},{"id":"bolma01","tier":"impossible","name":"Manute Bol","nicknames":["Raan Cheg","'Nute","Iron Bol","The Dinka Dunker","Minutiae","The Project","'Nute Blockne","Rudy","The Human Pencil in Sneakers"]},{"id":"jamesje01","tier":"impossible","name":"Jerome James","nicknames":["Big Snacks","Big JJ"]},{"id":"rodmade01","tier":"easy","name":"Dennis Rodman","nicknames":["The Worm","Dennis the Menace","Country","Psycho","Rodzilla","Demolition Man","El Loco"]},{"id":"willilo02","tier":"hard","name":"Lou Williams","nicknames":["Sweet Lou","Lou-Will","Lemon Pepper Lou","Underground GOAT"]},{"id":"davisgl01","tier":"hard","name":"Glen Davis","nicknames":["Big Baby","Large Infant","Uno-Uno","Funk"]},{"id":"oaklech01","tier":"hard","name":"Charles Oakley","nicknames":["Oak Tree","Oak"]},{"id":"webstma01","tier":"impossible","name":"Marvin Webster","nicknames":["The Human Eraser","Marvin the Magnificent"]},{"id":"millere01","tier":"normal","name":"Reggie Miller","nicknames":["Uncle Reg","The Knick Killer","Killa","Funk","Mighty Mouth","Freddy"]},{"id":"stoudam01","tier":"normal","name":"Amar'e Stoudemire","nicknames":["S.T.A.T.","The Little Tyrant","Little Lord"]},{"id":"pippesc01","tier":"normal","name":"Scottie Pippen","nicknames":["Pip","Scott","Batman","Robin"]},{"id":"thomais01","tier":"normal","name":"Isiah Thomas","nicknames":["Zeke","The Baby-Faced Assassin","Tuss","Pocket Magic"]},{"id":"waltobi01","tier":"normal","name":"Bill Walton","nicknames":["Big Red","Grateful Red","Red Baron","Redwood","Chief","Solar"]},{"id":"billuch01","tier":"hard","name":"Chauncey Billups","nicknames":["Mr. Big Shot","Smooth"]},{"id":"nowitdi01","tier":"hard","name":"Dirk Nowitzki","nicknames":["Dirty","Tall Baller from the G","German Race Car","German Jesus"]},{"id":"anthoca01","tier":"hard","name":"Carmelo Anthony","nicknames":["Melo","Hoodie Melo","Sweet Melon","Mel"]},{"id":"irvinky01","tier":"hard","name":"Kyrie Irving","nicknames":["Uncle Drew","Ankletaker","World B. Flat","Kai"]},{"id":"mcgratr01","tier":"hard","name":"Tracy McGrady","nicknames":["T-Mac","The Big Sleep"]},{"id":"allenra02","tier":"hard","name":"Ray Allen","nicknames":["Ray-Ray","Sugar Ray","Jesus Shuttlesworth","Skinny Walt","Gentleman"]},{"id":"mchalke01","tier":"hard","name":"Kevin McHale","nicknames":["Black Hole","Herman Munster"]},{"id":"barnema01","tier":"impossible","name":"Marvin Barnes","nicknames":["Bad News","The Magnificent","Movin' Marvin","BB"]},{"id":"johnsvi01","tier":"impossible","name":"Vinnie Johnson","nicknames":["Microwave","V.J.","Hoo","Mookie","007"]},{"id":"freewo01","tier":"impossible","name":"World B. Free","nicknames":["Prince of Mid-Air","All-World","Brownsville Bomber"]}];
+
+/* ---------------- MODE CONFIG ---------------- */
+const MODES = {
+  easy: {
+    label: "Easy",
+    desc: "Household names. Multiple choice — pick the right superstar from four options.",
+    rules: [
+      "<b>Format:</b> Multiple choice (4 options)",
+      "<b>Nicknames shown:</b> All known nicknames for the player",
+      "<b>Scoring:</b> +10 per correct answer",
+      "<b>Lives:</b> None — play through all 10 questions"
+    ],
+    questions: 10,
+    lives: null,
+    inputType: "choice",
+    showAllNicknames: true,
+    points: 10,
+    hintCost: 0,
+  },
+  normal: {
+    label: "Normal",
+    desc: "Recognizable stars with less obvious nicknames. Type the answer yourself.",
+    rules: [
+      "<b>Format:</b> Type the player's name",
+      "<b>Nicknames shown:</b> All known nicknames for the player",
+      "<b>Scoring:</b> +15 per correct answer, hint costs −5",
+      "<b>Lives:</b> None — play through all 10 questions"
+    ],
+    questions: 10,
+    lives: null,
+    inputType: "text",
+    showAllNicknames: true,
+    points: 15,
+    hintCost: 5,
+  },
+  hard: {
+    label: "Hard",
+    desc: "Role players and deep cuts. One nickname only, and misses cost you.",
+    rules: [
+      "<b>Format:</b> Type the player's name",
+      "<b>Nicknames shown:</b> Only one nickname per question",
+      "<b>Scoring:</b> +25 per correct answer, hint costs −10",
+      "<b>Lives:</b> 3 — a wrong or skipped answer costs a life"
+    ],
+    questions: 10,
+    lives: 3,
+    inputType: "text",
+    showAllNicknames: false,
+    points: 25,
+    hintCost: 10,
+  },
+  impossible: {
+    label: "Impossible",
+    desc: "True Basketball-Reference deep cuts. Obscure nickname, no mercy.",
+    rules: [
+      "<b>Format:</b> Type the player's name",
+      "<b>Nicknames shown:</b> Only the single most obscure nickname",
+      "<b>Scoring:</b> +40 per correct answer, hint costs −20",
+      "<b>Lives:</b> 2 — a wrong or skipped answer costs a life"
+    ],
+    questions: 10,
+    lives: 2,
+    inputType: "text",
+    showAllNicknames: false,
+    points: 40,
+    hintCost: 20,
+  },
+};
+
+/* ---------------- STATE ---------------- */
+let state = null;
+let currentMode = "easy";
+
+/* ---------------- HELPERS ---------------- */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function normalize(str) {
+  return str
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/\./g, "")
+    .replace(/[-']/g, " ")
+    .replace(/\bjr\b|\bsr\b|\bii\b|\biii\b|\biv\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+    }
+  }
+  return dp[m][n];
+}
+
+function isCorrectGuess(guess, playerName) {
+  const g = normalize(guess);
+  if (!g) return false;
+  const full = normalize(playerName);
+  const lastName = full.split(" ").pop();
+  if (g === full) return true;
+  if (g === lastName) return true;
+  // typo tolerance
+  const tol = full.length > 10 ? 2 : 1;
+  if (levenshtein(g, full) <= tol) return true;
+  if (lastName.length >= 4 && levenshtein(g, lastName) <= 1) return true;
+  return false;
+}
+
+function poolFor(mode) {
+  return PLAYERS.filter(p => p.tier === mode);
+}
+
+function bestStreakKey(mode) { return `nickdraft_best_${mode}`; }
+
+function getBest(mode) {
+  return parseInt(localStorage.getItem(bestStreakKey(mode)) || "0", 10);
+}
+
+function setBestIfHigher(mode, val) {
+  if (val > getBest(mode)) localStorage.setItem(bestStreakKey(mode), String(val));
+}
+
+function renderBestLine() {
+  const b = getBest(currentMode);
+  document.getElementById("best-streak-line").textContent = b ? `Best streak (${MODES[currentMode].label}): ${b}` : "";
+}
+
+/* ---------------- INTRO SCREEN ---------------- */
+function renderIntro() {
+  const cfg = MODES[currentMode];
+  document.getElementById("intro-desc").textContent = cfg.desc;
+  document.getElementById("intro-rules").innerHTML = cfg.rules.map(r => `<li>${r}</li>`).join("");
+  renderBestLine();
+  showScreen("intro");
+}
+
+function showScreen(name) {
+  document.getElementById("screen-intro").style.display = name === "intro" ? "" : "none";
+  document.getElementById("screen-game").style.display = name === "game" ? "" : "none";
+  document.getElementById("screen-summary").style.display = name === "summary" ? "" : "none";
+}
+
+/* ---------------- MODE TABS ---------------- */
+document.getElementById("mode-tabs").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-mode]");
+  if (!btn) return;
+  currentMode = btn.dataset.mode;
+  [...document.querySelectorAll("#mode-tabs button")].forEach(b => b.classList.toggle("active", b === btn));
+  renderIntro();
+});
+
+document.getElementById("start-btn").addEventListener("click", startRound);
+document.getElementById("play-again-btn").addEventListener("click", startRound);
+document.getElementById("change-mode-btn").addEventListener("click", renderIntro);
+
+/* ---------------- ROUND LOGIC ---------------- */
+function startRound() {
+  const cfg = MODES[currentMode];
+  const pool = shuffle(poolFor(currentMode));
+  const n = Math.min(cfg.questions, pool.length);
+  state = {
+    mode: currentMode,
+    cfg,
+    queue: pool.slice(0, n),
+    idx: 0,
+    score: 0,
+    streak: 0,
+    bestStreakThisRound: 0,
+    lives: cfg.lives,
+    correctCount: 0,
+    missed: [],
+    hintUsed: false,
+    answered: false,
+  };
+  showScreen("game");
+  renderQuestion();
+}
+
+function currentPlayer() { return state.queue[state.idx]; }
+
+function pickNicknameForQuestion(player) {
+  if (state.cfg.showAllNicknames) return player.nicknames;
+  // hard/impossible: show only one. Hard -> a middle-ish one, Impossible -> the most obscure (last).
+  if (state.mode === "impossible") {
+    return [player.nicknames[player.nicknames.length - 1]];
+  }
+  const mid = Math.floor((player.nicknames.length - 1) / 2);
+  return [player.nicknames[mid]];
+}
+
+function renderQuestion() {
+  state.answered = false;
+  state.hintUsed = false;
+  const cfg = state.cfg;
+  const player = currentPlayer();
+  const shownNicks = pickNicknameForQuestion(player);
+
+  document.getElementById("hud-qnum").textContent = state.idx + 1;
+  document.getElementById("hud-qtotal").textContent = state.queue.length;
+  document.getElementById("hud-score").textContent = state.score;
+  document.getElementById("hud-streak").textContent = state.streak;
+  document.getElementById("hud-lives").textContent = cfg.lives ? "❤️".repeat(state.lives) + "🖤".repeat(cfg.lives - state.lives) : "";
+  document.getElementById("progress-fill").style.width = `${(state.idx / state.queue.length) * 100}%`;
+
+  document.getElementById("nick-text").textContent = `"${shownNicks[0]}"`;
+  document.getElementById("nick-extra").textContent = shownNicks.length > 1 ? `also known as: ${shownNicks.slice(1).join(", ")}` : "";
+
+  document.getElementById("feedback").classList.remove("show", "correct", "wrong");
+  document.getElementById("next-row").style.display = "none";
+  document.getElementById("hint-line").textContent = "";
+
+  if (cfg.inputType === "choice") {
+    document.getElementById("choices-area").style.display = "grid";
+    document.getElementById("input-area").style.display = "none";
+    renderChoices(player);
+  } else {
+    document.getElementById("choices-area").style.display = "none";
+    document.getElementById("input-area").style.display = "block";
+    const input = document.getElementById("guess-input");
+    input.value = "";
+    input.disabled = false;
+    document.getElementById("submit-guess").disabled = false;
+    document.getElementById("hint-btn").disabled = false;
+    document.getElementById("skip-btn").disabled = false;
+    input.focus();
+  }
+}
+
+function renderChoices(player) {
+  const others = shuffle(PLAYERS.filter(p => p.id !== player.id)).slice(0, 3);
+  const options = shuffle([player, ...others]);
+  const area = document.getElementById("choices-area");
+  area.innerHTML = "";
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "choice-btn";
+    btn.textContent = opt.name;
+    btn.addEventListener("click", () => handleAnswer(opt.id === player.id, btn, options, player));
+    area.appendChild(btn);
+  });
+}
+
+function handleAnswer(correct, clickedBtn, allOptionBtns, player) {
+  if (state.answered) return;
+  state.answered = true;
+  const buttons = document.querySelectorAll(".choice-btn");
+  buttons.forEach(b => b.disabled = true);
+  if (clickedBtn) clickedBtn.classList.add(correct ? "correct" : "wrong");
+  if (!correct) {
+    const correctBtn = [...buttons].find(b => b.textContent === player.name);
+    if (correctBtn) correctBtn.classList.add("correct");
+  }
+  resolveAnswer(correct, player);
+}
+
+document.getElementById("submit-guess").addEventListener("click", submitTextGuess);
+document.getElementById("guess-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") submitTextGuess();
+});
+
+function submitTextGuess() {
+  if (state.answered) return;
+  const player = currentPlayer();
+  const val = document.getElementById("guess-input").value;
+  const correct = isCorrectGuess(val, player.name);
+  state.answered = true;
+  document.getElementById("guess-input").disabled = true;
+  document.getElementById("submit-guess").disabled = true;
+  document.getElementById("hint-btn").disabled = true;
+  document.getElementById("skip-btn").disabled = true;
+  resolveAnswer(correct, player);
+}
+
+document.getElementById("skip-btn").addEventListener("click", () => {
+  if (state.answered) return;
+  const player = currentPlayer();
+  state.answered = true;
+  document.getElementById("guess-input").disabled = true;
+  document.getElementById("submit-guess").disabled = true;
+  document.getElementById("hint-btn").disabled = true;
+  document.getElementById("skip-btn").disabled = true;
+  resolveAnswer(false, player);
+});
+
+document.getElementById("hint-btn").addEventListener("click", () => {
+  if (state.answered || state.hintUsed) return;
+  state.hintUsed = true;
+  const player = currentPlayer();
+  const cost = state.cfg.hintCost;
+  state.score = Math.max(0, state.score - cost);
+  document.getElementById("hud-score").textContent = state.score;
+  document.getElementById("hint-line").textContent =
+    `Hint: name starts with "${player.name[0]}", ${player.name.split(" ").length} word(s), ${player.name.length} letters total.${cost ? ` (−${cost} pts)` : ""}`;
+  document.getElementById("hint-btn").disabled = true;
+});
+
+function resolveAnswer(correct, player) {
+  const cfg = state.cfg;
+  const fb = document.getElementById("feedback");
+  fb.classList.add("show", correct ? "correct" : "wrong");
+  document.getElementById("feedback-name").textContent = correct ? `✅ Correct — ${player.name}` : `❌ It was ${player.name}`;
+  document.getElementById("feedback-nicks").textContent = `Nicknames: ${player.nicknames.join(", ")}`;
+
+  if (correct) {
+    let pts = cfg.points;
+    if (state.hintUsed) pts = Math.max(0, pts - cfg.hintCost);
+    state.score += pts;
+    state.streak += 1;
+    state.correctCount += 1;
+    state.bestStreakThisRound = Math.max(state.bestStreakThisRound, state.streak);
+  } else {
+    state.streak = 0;
+    state.missed.push(player);
+    if (cfg.lives !== null) state.lives -= 1;
+  }
+
+  document.getElementById("hud-score").textContent = state.score;
+  document.getElementById("hud-streak").textContent = state.streak;
+  document.getElementById("hud-lives").textContent = cfg.lives ? "❤️".repeat(Math.max(state.lives,0)) + "🖤".repeat(cfg.lives - Math.max(state.lives,0)) : "";
+
+  const outOfLives = cfg.lives !== null && state.lives <= 0;
+  const isLastQuestion = state.idx >= state.queue.length - 1;
+
+  document.getElementById("next-row").style.display = "flex";
+  const nextBtn = document.getElementById("next-btn");
+  nextBtn.textContent = outOfLives ? "See Results →" : (isLastQuestion ? "See Results →" : "Next Question →");
+  nextBtn.onclick = () => {
+    if (outOfLives || isLastQuestion) {
+      endRound();
+    } else {
+      state.idx += 1;
+      renderQuestion();
+    }
+  };
+}
+
+function endRound() {
+  setBestIfHigher(state.mode, state.bestStreakThisRound);
+  document.getElementById("progress-fill").style.width = "100%";
+  document.getElementById("summary-score").textContent = state.score;
+  document.getElementById("summary-sub").textContent =
+    `${state.correctCount}/${state.idx + 1} correct · best streak ${state.bestStreakThisRound}`;
+
+  const missedWrap = document.getElementById("missed-wrap");
+  const missedList = document.getElementById("missed-list");
+  missedList.innerHTML = "";
+  if (state.missed.length) {
+    missedWrap.style.display = "block";
+    state.missed.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "missed-item";
+      div.innerHTML = `<span class="mname">${p.name}</span><span class="mnick">${p.nicknames.join(", ")}</span>`;
+      missedList.appendChild(div);
+    });
+  } else {
+    missedWrap.style.display = "none";
+  }
+
+  showScreen("summary");
+  renderBestLine();
+}
+
+/* ---------------- INIT ---------------- */
+renderIntro();
+</script>
+</body>
+</html>

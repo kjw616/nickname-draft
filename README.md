@@ -5,7 +5,7 @@ difficulty levels change the format, not just the player pool.
 
 ![Difficulty selection screen](screenshot.png)
 
-**Live demo:** _add GitHub Pages link here_
+**Live demo:** https://kjw616.github.io/nickname-draft/
 
 ## How it plays
 

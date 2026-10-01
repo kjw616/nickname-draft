@@ -9,14 +9,14 @@ difficulty levels change the format, not just the player pool.
 
 ## How it plays
 
-| Level | Format | Lives | Points per correct |
-|---|---|---|---|
-| Easy | Multiple choice (4 options), household names | None (10 questions) | +10 |
-| Normal | — | — | +15 |
-| Hard | — | — | +25 |
-| Impossible | Type the player's name | — | +40 |
+| Level | Players | Format | Nicknames shown | Lives | Points (hint cost) |
+|---|---|---|---|---|---|
+| Easy | Household names | Multiple choice (4 options) | All | None | +10 |
+| Normal | Recognizable stars | Type the name | All | None | +15 (−5) |
+| Hard | Role players, deep cuts | Type the name | One | 3 | +25 (−10) |
+| Impossible | Basketball-Reference deep cuts | Type the name | Most obscure only | 2 | +40 (−20) |
 
-<!-- Fill in the dashes from the game's settings. -->
+Every round is 10 questions.
 
 ## Design notes
 
